@@ -1,0 +1,13 @@
+system_id: e557db15-85d8-4486-99ff-90e61de8b7c1
+node_id: node-dc999fa6
+transport_mode: centralized
+input_mode: http
+output_mode: sync
+memory:
+  reads: []
+  writes:
+  - generated_report
+  scope: system
+failure:
+  mode: retry
+  max_retries: 3

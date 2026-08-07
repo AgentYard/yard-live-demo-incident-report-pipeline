@@ -1,0 +1,11 @@
+system_id: e557db15-85d8-4486-99ff-90e61de8b7c1
+node_id: node-6ae53376
+transport_mode: centralized
+input_mode: http
+output_mode: sync
+memory:
+  reads: []
+  writes: []
+  scope: system
+failure:
+  mode: abort
