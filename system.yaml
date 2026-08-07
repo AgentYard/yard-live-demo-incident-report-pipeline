@@ -50,7 +50,7 @@ observability:
   webhook_on_complete: null
   trace_include_memory: true
 nodes:
-- id: node-a7237503
+- id: node-203b8d9b
   config:
     retries: 3
     on_failure: abort
@@ -69,7 +69,7 @@ nodes:
     x: 100.0
     y: 200.0
   agent_version: 1.0.0
-- id: node-801fd415
+- id: node-754256fa
   config:
     retries: 3
     on_failure: abort
@@ -98,6 +98,6 @@ edges:
     llm_prompt: null
   memory_keys: null
   memory_pass: full
-  source_node_id: node-a7237503
-  target_node_id: node-801fd415
+  source_node_id: node-203b8d9b
+  target_node_id: node-754256fa
   schema_compatibility: null

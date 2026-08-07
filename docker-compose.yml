@@ -14,7 +14,7 @@ services:
     ports:
     - 8080:8080
     environment:
-      YARD_SYSTEM_ID: 27f19216-f74c-449c-aa62-aa06468b84da
+      YARD_SYSTEM_ID: 63ab01ca-428d-42b5-ab17-ebbdab1131c1
       YARD_TRANSPORT: http
       YARD_REDIS_URL: redis://redis:6379
       YARD_ENGINE_TYPE: chain_executor
@@ -26,8 +26,8 @@ services:
     image: agentyard-incident-commander:latest
     environment:
       YARD_TRANSPORT: http
-      YARD_SYSTEM_ID: 27f19216-f74c-449c-aa62-aa06468b84da
-      YARD_NODE_ID: node-a7237503
+      YARD_SYSTEM_ID: 63ab01ca-428d-42b5-ab17-ebbdab1131c1
+      YARD_NODE_ID: node-203b8d9b
       YARD_REDIS_URL: redis://redis:6379
       YARD_PORT: '9000'
       YARD_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
@@ -45,14 +45,14 @@ services:
       timeout: 5s
       retries: 3
     configs:
-    - source: yard_cfg_node-a7237503
+    - source: yard_cfg_node-203b8d9b
       target: /yard/config.yaml
   report-generator-agent:
     image: agentyard-report-generator-agent:latest
     environment:
       YARD_TRANSPORT: http
-      YARD_SYSTEM_ID: 27f19216-f74c-449c-aa62-aa06468b84da
-      YARD_NODE_ID: node-801fd415
+      YARD_SYSTEM_ID: 63ab01ca-428d-42b5-ab17-ebbdab1131c1
+      YARD_NODE_ID: node-754256fa
       YARD_REDIS_URL: redis://redis:6379
       YARD_PORT: '9000'
       YARD_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
@@ -70,13 +70,13 @@ services:
       timeout: 5s
       retries: 3
     configs:
-    - source: yard_cfg_node-801fd415
+    - source: yard_cfg_node-754256fa
       target: /yard/config.yaml
 networks:
   default:
     name: yard-live-demo-incident-report-pipeline
 configs:
-  yard_cfg_node-a7237503:
-    file: ./yard-config-node-a7237503.yaml
-  yard_cfg_node-801fd415:
-    file: ./yard-config-node-801fd415.yaml
+  yard_cfg_node-203b8d9b:
+    file: ./yard-config-node-203b8d9b.yaml
+  yard_cfg_node-754256fa:
+    file: ./yard-config-node-754256fa.yaml

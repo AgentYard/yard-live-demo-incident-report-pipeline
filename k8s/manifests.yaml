@@ -59,7 +59,7 @@ spec:
       containers:
       - env:
         - name: YARD_SYSTEM_ID
-          value: 27f19216-f74c-449c-aa62-aa06468b84da
+          value: 63ab01ca-428d-42b5-ab17-ebbdab1131c1
         - name: YARD_TRANSPORT
           value: http
         - name: YARD_REDIS_URL
@@ -127,7 +127,7 @@ metadata:
   namespace: yard-live-demo-incident-report-pipeline
 spec:
   ports:
-  - nodePort: 30503
+  - nodePort: 30471
     port: 8003
     targetPort: 8003
   selector:
@@ -158,9 +158,9 @@ spec:
         - name: YARD_TRANSPORT
           value: http
         - name: YARD_SYSTEM_ID
-          value: 27f19216-f74c-449c-aa62-aa06468b84da
+          value: 63ab01ca-428d-42b5-ab17-ebbdab1131c1
         - name: YARD_NODE_ID
-          value: node-a7237503
+          value: node-203b8d9b
         - name: YARD_REDIS_URL
           value: redis://redis:6379
         - name: YARD_PORT
@@ -213,7 +213,7 @@ spec:
         - mountPath: /yard/config.yaml
           name: yard-config
           readOnly: true
-          subPath: node-a7237503.yaml
+          subPath: node-203b8d9b.yaml
       securityContext:
         fsGroup: 1000
         runAsNonRoot: true
@@ -259,9 +259,9 @@ spec:
         - name: YARD_TRANSPORT
           value: http
         - name: YARD_SYSTEM_ID
-          value: 27f19216-f74c-449c-aa62-aa06468b84da
+          value: 63ab01ca-428d-42b5-ab17-ebbdab1131c1
         - name: YARD_NODE_ID
-          value: node-801fd415
+          value: node-754256fa
         - name: YARD_REDIS_URL
           value: redis://redis:6379
         - name: YARD_PORT
@@ -314,7 +314,7 @@ spec:
         - mountPath: /yard/config.yaml
           name: yard-config
           readOnly: true
-          subPath: node-801fd415.yaml
+          subPath: node-754256fa.yaml
       securityContext:
         fsGroup: 1000
         runAsNonRoot: true
@@ -338,13 +338,13 @@ spec:
 ---
 apiVersion: v1
 data:
-  node-801fd415.yaml: "system_id: 27f19216-f74c-449c-aa62-aa06468b84da\nnode_id: node-801fd415\n\
+  node-203b8d9b.yaml: "system_id: 63ab01ca-428d-42b5-ab17-ebbdab1131c1\nnode_id: node-203b8d9b\n\
+    transport_mode: centralized\ninput_mode: http\noutput_mode: sync\nmemory:\n  reads:\
+    \ []\n  writes: []\n  scope: system\nfailure:\n  mode: abort\n"
+  node-754256fa.yaml: "system_id: 63ab01ca-428d-42b5-ab17-ebbdab1131c1\nnode_id: node-754256fa\n\
     transport_mode: centralized\ninput_mode: http\noutput_mode: sync\nmemory:\n  reads:\
     \ []\n  writes:\n  - generated_report\n  scope: system\nfailure:\n  mode: retry\n\
     \  max_retries: 3\n"
-  node-a7237503.yaml: "system_id: 27f19216-f74c-449c-aa62-aa06468b84da\nnode_id: node-a7237503\n\
-    transport_mode: centralized\ninput_mode: http\noutput_mode: sync\nmemory:\n  reads:\
-    \ []\n  writes: []\n  scope: system\nfailure:\n  mode: abort\n"
 kind: ConfigMap
 metadata:
   name: yard-node-configs
@@ -352,16 +352,16 @@ metadata:
 ---
 apiVersion: v1
 data:
-  system.json: "architecture: sequential\ncreated_at: '2026-08-07T01:18:02.173980Z'\n\
+  system.json: "architecture: sequential\ncreated_at: '2026-08-07T01:40:07.318165Z'\n\
     description: Triage a real on-call incident, then generate a formal report from\
     \ the\n  outcome.\nedges:\n- condition: null\n  id: edge-seq-0\n  memory_keys:\
-    \ null\n  memory_pass: full\n  schema_compatibility: null\n  source_node_id: node-a7237503\n\
-    \  target_node_id: node-801fd415\n  transform:\n    llm_model: null\n    llm_prompt:\
+    \ null\n  memory_pass: full\n  schema_compatibility: null\n  source_node_id: node-203b8d9b\n\
+    \  target_node_id: node-754256fa\n  transform:\n    llm_model: null\n    llm_prompt:\
     \ null\n    mappings: null\n    strategy: passthrough\nenvironment: dev\nerror_recovery:\n\
     \  circuit_breaker_enabled: true\n  circuit_breaker_reset_seconds: 60\n  circuit_breaker_threshold:\
     \ 3\n  dead_letter_queue: true\n  global_timeout_seconds: 300\n  max_total_retries:\
     \ 10\n  on_system_failure: return_partial\ngithub_repo_url: null\nglobal_token:\
-    \ ''\nid: 27f19216-f74c-449c-aa62-aa06468b84da\nmemory_config:\n  initial_context:\
+    \ ''\nid: 63ab01ca-428d-42b5-ab17-ebbdab1131c1\nmemory_config:\n  initial_context:\
     \ null\n  max_memory_keys: 100\n  memory_ttl_seconds: null\n  open: true\n  persistence:\
     \ session\n  schema: null\n  strategy: shared_bus\n  strict: false\nname: \"Live\
     \ Demo \\u2014 Incident Report Pipeline\"\nnamespace: default\nnodes:\n- agent_id:\
@@ -369,13 +369,13 @@ data:
     \  cache_ttl_seconds: null\n    fallback_agent_id: null\n    input_mapping: null\n\
     \    memory_access: read-write\n    on_failure: abort\n    output_mapping: null\n\
     \    rate_limit_rpm: null\n    retries: 3\n    retry_backoff: fixed\n    retry_delay_ms:\
-    \ 1000\n    system_prompt: null\n    timeout_seconds: 30\n  id: node-a7237503\n\
+    \ 1000\n    system_prompt: null\n    timeout_seconds: 30\n  id: node-203b8d9b\n\
     \  position:\n    x: 100.0\n    y: 200.0\n- agent_id: 69d1924f-740d-47a0-9c6c-75db27f1ace6\n\
     \  agent_version: 1.0.0\n  config:\n    cache_ttl_seconds: null\n    fallback_agent_id:\
     \ null\n    input_mapping: null\n    memory_access: read-write\n    on_failure:\
     \ abort\n    output_mapping: null\n    rate_limit_rpm: null\n    retries: 3\n\
     \    retry_backoff: fixed\n    retry_delay_ms: 1000\n    system_prompt: null\n\
-    \    timeout_seconds: 30\n  id: node-801fd415\n  position:\n    x: 380.0\n   \
+    \    timeout_seconds: 30\n  id: node-754256fa\n  position:\n    x: 380.0\n   \
     \ y: 200.0\nobservability:\n  log_level: info\n  metrics_enabled: true\n  trace_enabled:\
     \ true\n  trace_include_io: true\n  trace_include_memory: true\n  webhook_on_complete:\
     \ null\n  webhook_on_failure: null\norchestrator_config:\n  allow_partial_results:\
@@ -385,7 +385,7 @@ data:
     \  merge_agent_id: null\n  merge_strategy: null\n  quality_metric_key: null\n\
     \  quality_threshold: null\n  reflection_enabled: false\n  reflection_prompt:\
     \ ''\n  routing_mode: dynamic\n  system_prompt: ''\n  transport_mode: centralized\n\
-    owner: dev-admin\nstatus: draft\nupdated_at: '2026-08-07T01:18:02.173986Z'\nversion:\
+    owner: dev-admin\nstatus: draft\nupdated_at: '2026-08-07T01:40:07.318170Z'\nversion:\
     \ 1\n"
   transport: http
 kind: ConfigMap
@@ -395,7 +395,7 @@ metadata:
 ---
 apiVersion: v1
 data:
-  system.json: "{\n  \"id\": \"27f19216-f74c-449c-aa62-aa06468b84da\",\n  \"name\"\
+  system.json: "{\n  \"id\": \"63ab01ca-428d-42b5-ab17-ebbdab1131c1\",\n  \"name\"\
     : \"Live Demo \\u2014 Incident Report Pipeline\",\n  \"engine_type\": \"chain_executor\"\
     ,\n  \"transport_mode\": \"centralized\",\n  \"orchestrator_config\": {\n    \"\
     llm_model\": \"gpt-4o\",\n    \"conditions\": null,\n    \"engine_type\": \"chain_executor\"\
@@ -412,9 +412,9 @@ data:
     id\": \"edge-seq-0\",\n      \"condition\": null,\n      \"transform\": {\n  \
     \      \"mappings\": null,\n        \"strategy\": \"passthrough\",\n        \"\
     llm_model\": null,\n        \"llm_prompt\": null\n      },\n      \"memory_keys\"\
-    : null,\n      \"memory_pass\": \"full\",\n      \"source_node_id\": \"node-a7237503\"\
-    ,\n      \"target_node_id\": \"node-801fd415\",\n      \"schema_compatibility\"\
-    : null\n    }\n  ],\n  \"nodes\": [\n    {\n      \"id\": \"node-a7237503\",\n\
+    : null,\n      \"memory_pass\": \"full\",\n      \"source_node_id\": \"node-203b8d9b\"\
+    ,\n      \"target_node_id\": \"node-754256fa\",\n      \"schema_compatibility\"\
+    : null\n    }\n  ],\n  \"nodes\": [\n    {\n      \"id\": \"node-203b8d9b\",\n\
     \      \"agent_id\": \"83730c84-9872-44e5-8d28-0f71bd1eb9f1\",\n      \"agent_name\"\
     : \"incident-commander\",\n      \"agent_version\": \"1.0.0\",\n      \"a2a_endpoint\"\
     : \"http://incident-commander.yard-live-demo-incident-report-pipeline.svc.cluster.local:9000\"\
@@ -464,7 +464,7 @@ data:
     : \"fixed\",\n        \"system_prompt\": null,\n        \"output_mapping\": null,\n\
     \        \"rate_limit_rpm\": null,\n        \"retry_delay_ms\": 1000,\n      \
     \  \"timeout_seconds\": 30,\n        \"cache_ttl_seconds\": null,\n        \"\
-    fallback_agent_id\": null\n      }\n    },\n    {\n      \"id\": \"node-801fd415\"\
+    fallback_agent_id\": null\n      }\n    },\n    {\n      \"id\": \"node-754256fa\"\
     ,\n      \"agent_id\": \"69d1924f-740d-47a0-9c6c-75db27f1ace6\",\n      \"agent_name\"\
     : \"report-generator-agent\",\n      \"agent_version\": \"1.0.0\",\n      \"a2a_endpoint\"\
     : \"http://report-generator-agent.yard-live-demo-incident-report-pipeline.svc.cluster.local:9000\"\

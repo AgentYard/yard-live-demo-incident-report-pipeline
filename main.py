@@ -16,8 +16,8 @@ TOKEN = ""
 # illegal header value — only attach Authorization when a token exists.
 AGENT_HEADERS = {"Authorization": f"Bearer {TOKEN}"} if TOKEN else {}
 AGENTS = [
-    {"id": "node-a7237503", "agent_id": "83730c84-9872-44e5-8d28-0f71bd1eb9f1", "name": "incident-commander", "endpoint": "http://10.42.0.134:9072", "timeout": 30},
-    {"id": "node-801fd415", "agent_id": "69d1924f-740d-47a0-9c6c-75db27f1ace6", "name": "report-generator-agent", "endpoint": "http://10.42.0.134:9035", "timeout": 30},
+    {"id": "node-203b8d9b", "agent_id": "83730c84-9872-44e5-8d28-0f71bd1eb9f1", "name": "incident-commander", "endpoint": "http://10.42.0.134:9072", "timeout": 30},
+    {"id": "node-754256fa", "agent_id": "69d1924f-740d-47a0-9c6c-75db27f1ace6", "name": "report-generator-agent", "endpoint": "http://10.42.0.134:9035", "timeout": 30},
 ]
 
 # Endpoints baked in above come from the registry at generation time —
@@ -38,7 +38,7 @@ for _agent in AGENTS:
 # it back into a real value. Only strategy + mappings are carried through —
 # the only two apply_transform() below actually reads.
 EDGE_TRANSFORM_BY_TARGET = {
-    "node-801fd415": {
+    "node-754256fa": {
         "strategy": "passthrough",
         "mappings": json.loads("null"),
     },
