@@ -1,0 +1,103 @@
+name: "Live Demo \u2014 Incident Report Pipeline"
+description: Triage a real on-call incident, then generate a formal report from the
+  outcome.
+namespace: default
+architecture: sequential
+environment: dev
+orchestrator_config:
+  llm_model: gpt-4o
+  conditions: null
+  engine_type: chain_executor
+  llm_provider: null
+  routing_mode: dynamic
+  system_prompt: ''
+  max_iterations: 10
+  merge_agent_id: null
+  merge_strategy: null
+  transport_mode: centralized
+  llm_temperature: 0.3
+  fallback_agent_id: null
+  quality_threshold: null
+  reflection_prompt: ''
+  quality_metric_key: null
+  reflection_enabled: false
+  max_refinement_loops: null
+  allow_partial_results: null
+  fanout_timeout_seconds: null
+memory_config:
+  open: true
+  schema: null
+  strict: false
+  strategy: shared_bus
+  persistence: session
+  initial_context: null
+  max_memory_keys: 100
+  memory_ttl_seconds: null
+error_recovery:
+  dead_letter_queue: true
+  max_total_retries: 10
+  on_system_failure: return_partial
+  global_timeout_seconds: 300
+  circuit_breaker_enabled: true
+  circuit_breaker_threshold: 3
+  circuit_breaker_reset_seconds: 60
+observability:
+  log_level: info
+  trace_enabled: true
+  metrics_enabled: true
+  trace_include_io: true
+  webhook_on_failure: null
+  webhook_on_complete: null
+  trace_include_memory: true
+nodes:
+- id: node-a7237503
+  config:
+    retries: 3
+    on_failure: abort
+    input_mapping: null
+    memory_access: read-write
+    retry_backoff: fixed
+    system_prompt: null
+    output_mapping: null
+    rate_limit_rpm: null
+    retry_delay_ms: 1000
+    timeout_seconds: 30
+    cache_ttl_seconds: null
+    fallback_agent_id: null
+  agent_id: 83730c84-9872-44e5-8d28-0f71bd1eb9f1
+  position:
+    x: 100.0
+    y: 200.0
+  agent_version: 1.0.0
+- id: node-801fd415
+  config:
+    retries: 3
+    on_failure: abort
+    input_mapping: null
+    memory_access: read-write
+    retry_backoff: fixed
+    system_prompt: null
+    output_mapping: null
+    rate_limit_rpm: null
+    retry_delay_ms: 1000
+    timeout_seconds: 30
+    cache_ttl_seconds: null
+    fallback_agent_id: null
+  agent_id: 69d1924f-740d-47a0-9c6c-75db27f1ace6
+  position:
+    x: 380.0
+    y: 200.0
+  agent_version: 1.0.0
+edges:
+- id: edge-seq-0
+  condition: null
+  transform:
+    mappings: null
+    strategy: passthrough
+    llm_model: null
+    llm_prompt: null
+  memory_keys: null
+  memory_pass: full
+  source_node_id: node-a7237503
+  target_node_id: node-801fd415
+  schema_compatibility: null

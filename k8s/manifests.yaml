@@ -1,0 +1,512 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: yard-live-demo-incident-report-pipeline
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: yard-live-demo-incident-report-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - image: redis:7-alpine
+        name: redis
+        ports:
+        - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: yard-live-demo-incident-report-pipeline
+spec:
+  ports:
+  - port: 6379
+    targetPort: 6379
+  selector:
+    app: redis
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: orchestrator
+    yard-system: yard-live-demo-incident-report-pipeline
+  name: orchestrator
+  namespace: yard-live-demo-incident-report-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orchestrator
+  template:
+    metadata:
+      labels:
+        app: orchestrator
+        yard-system: yard-live-demo-incident-report-pipeline
+    spec:
+      containers:
+      - env:
+        - name: YARD_SYSTEM_ID
+          value: 27f19216-f74c-449c-aa62-aa06468b84da
+        - name: YARD_TRANSPORT
+          value: http
+        - name: YARD_REDIS_URL
+          value: redis://redis:6379
+        - name: YARD_ENGINE_TYPE
+          value: chain_executor
+        - name: YARD_OTLP_ENDPOINT
+          value: http://jaeger:4318/v1/traces
+        - name: YARD_ROLE
+          value: in-cluster-orchestrator
+        - name: YARD_SYSTEM_SPEC_PATH
+          value: /etc/agentyard/system.json
+        image: agentyard-engine:latest
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8003
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 5
+        name: orchestrator
+        ports:
+        - containerPort: 8003
+        readinessProbe:
+          failureThreshold: 2
+          httpGet:
+            path: /health
+            port: 8003
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1000
+        volumeMounts:
+        - mountPath: /etc/agentyard
+          name: yard-system-spec
+          readOnly: true
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+      volumes:
+      - configMap:
+          name: yard-system-spec
+        name: yard-system-spec
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orchestrator
+  namespace: yard-live-demo-incident-report-pipeline
+spec:
+  ports:
+  - nodePort: 30503
+    port: 8003
+    targetPort: 8003
+  selector:
+    app: orchestrator
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: incident-commander
+    yard-system: yard-live-demo-incident-report-pipeline
+  name: incident-commander
+  namespace: yard-live-demo-incident-report-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: incident-commander
+  template:
+    metadata:
+      labels:
+        app: incident-commander
+        yard-system: yard-live-demo-incident-report-pipeline
+    spec:
+      containers:
+      - env:
+        - name: YARD_TRANSPORT
+          value: http
+        - name: YARD_SYSTEM_ID
+          value: 27f19216-f74c-449c-aa62-aa06468b84da
+        - name: YARD_NODE_ID
+          value: node-a7237503
+        - name: YARD_REDIS_URL
+          value: redis://redis:6379
+        - name: YARD_PORT
+          value: '9000'
+        - name: YARD_OTLP_ENDPOINT
+          value: http://jaeger:4318/v1/traces
+        - name: YARD_LLM_PROVIDER
+          value: bedrock
+        - name: YARD_AUTO_REGISTER
+          value: 'false'
+        - name: YARD_MEMORY
+          value: shared_bus
+        image: agentyard-incident-commander:latest
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 9000
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 5
+        name: incident-commander
+        ports:
+        - containerPort: 9000
+        readinessProbe:
+          failureThreshold: 2
+          httpGet:
+            path: /health
+            port: 9000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1000
+        volumeMounts:
+        - mountPath: /yard/config.yaml
+          name: yard-config
+          readOnly: true
+          subPath: node-a7237503.yaml
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+      volumes:
+      - configMap:
+          name: yard-node-configs
+        name: yard-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: incident-commander
+  namespace: yard-live-demo-incident-report-pipeline
+spec:
+  ports:
+  - port: 9000
+    targetPort: 9000
+  selector:
+    app: incident-commander
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: report-generator-agent
+    yard-system: yard-live-demo-incident-report-pipeline
+  name: report-generator-agent
+  namespace: yard-live-demo-incident-report-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: report-generator-agent
+  template:
+    metadata:
+      labels:
+        app: report-generator-agent
+        yard-system: yard-live-demo-incident-report-pipeline
+    spec:
+      containers:
+      - env:
+        - name: YARD_TRANSPORT
+          value: http
+        - name: YARD_SYSTEM_ID
+          value: 27f19216-f74c-449c-aa62-aa06468b84da
+        - name: YARD_NODE_ID
+          value: node-801fd415
+        - name: YARD_REDIS_URL
+          value: redis://redis:6379
+        - name: YARD_PORT
+          value: '9000'
+        - name: YARD_OTLP_ENDPOINT
+          value: http://jaeger:4318/v1/traces
+        - name: YARD_LLM_PROVIDER
+          value: bedrock
+        - name: YARD_AUTO_REGISTER
+          value: 'false'
+        - name: YARD_MEMORY
+          value: shared_bus
+        image: agentyard-report-generator-agent:latest
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 9000
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 5
+        name: report-generator-agent
+        ports:
+        - containerPort: 9000
+        readinessProbe:
+          failureThreshold: 2
+          httpGet:
+            path: /health
+            port: 9000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1000
+        volumeMounts:
+        - mountPath: /yard/config.yaml
+          name: yard-config
+          readOnly: true
+          subPath: node-801fd415.yaml
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+      volumes:
+      - configMap:
+          name: yard-node-configs
+        name: yard-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: report-generator-agent
+  namespace: yard-live-demo-incident-report-pipeline
+spec:
+  ports:
+  - port: 9000
+    targetPort: 9000
+  selector:
+    app: report-generator-agent
+  type: ClusterIP
+---
+apiVersion: v1
+data:
+  node-801fd415.yaml: "system_id: 27f19216-f74c-449c-aa62-aa06468b84da\nnode_id: node-801fd415\n\
+    transport_mode: centralized\ninput_mode: http\noutput_mode: sync\nmemory:\n  reads:\
+    \ []\n  writes:\n  - generated_report\n  scope: system\nfailure:\n  mode: retry\n\
+    \  max_retries: 3\n"
+  node-a7237503.yaml: "system_id: 27f19216-f74c-449c-aa62-aa06468b84da\nnode_id: node-a7237503\n\
+    transport_mode: centralized\ninput_mode: http\noutput_mode: sync\nmemory:\n  reads:\
+    \ []\n  writes: []\n  scope: system\nfailure:\n  mode: abort\n"
+kind: ConfigMap
+metadata:
+  name: yard-node-configs
+  namespace: yard-live-demo-incident-report-pipeline
+---
+apiVersion: v1
+data:
+  system.json: "architecture: sequential\ncreated_at: '2026-08-07T01:18:02.173980Z'\n\
+    description: Triage a real on-call incident, then generate a formal report from\
+    \ the\n  outcome.\nedges:\n- condition: null\n  id: edge-seq-0\n  memory_keys:\
+    \ null\n  memory_pass: full\n  schema_compatibility: null\n  source_node_id: node-a7237503\n\
+    \  target_node_id: node-801fd415\n  transform:\n    llm_model: null\n    llm_prompt:\
+    \ null\n    mappings: null\n    strategy: passthrough\nenvironment: dev\nerror_recovery:\n\
+    \  circuit_breaker_enabled: true\n  circuit_breaker_reset_seconds: 60\n  circuit_breaker_threshold:\
+    \ 3\n  dead_letter_queue: true\n  global_timeout_seconds: 300\n  max_total_retries:\
+    \ 10\n  on_system_failure: return_partial\ngithub_repo_url: null\nglobal_token:\
+    \ ''\nid: 27f19216-f74c-449c-aa62-aa06468b84da\nmemory_config:\n  initial_context:\
+    \ null\n  max_memory_keys: 100\n  memory_ttl_seconds: null\n  open: true\n  persistence:\
+    \ session\n  schema: null\n  strategy: shared_bus\n  strict: false\nname: \"Live\
+    \ Demo \\u2014 Incident Report Pipeline\"\nnamespace: default\nnodes:\n- agent_id:\
+    \ 83730c84-9872-44e5-8d28-0f71bd1eb9f1\n  agent_version: 1.0.0\n  config:\n  \
+    \  cache_ttl_seconds: null\n    fallback_agent_id: null\n    input_mapping: null\n\
+    \    memory_access: read-write\n    on_failure: abort\n    output_mapping: null\n\
+    \    rate_limit_rpm: null\n    retries: 3\n    retry_backoff: fixed\n    retry_delay_ms:\
+    \ 1000\n    system_prompt: null\n    timeout_seconds: 30\n  id: node-a7237503\n\
+    \  position:\n    x: 100.0\n    y: 200.0\n- agent_id: 69d1924f-740d-47a0-9c6c-75db27f1ace6\n\
+    \  agent_version: 1.0.0\n  config:\n    cache_ttl_seconds: null\n    fallback_agent_id:\
+    \ null\n    input_mapping: null\n    memory_access: read-write\n    on_failure:\
+    \ abort\n    output_mapping: null\n    rate_limit_rpm: null\n    retries: 3\n\
+    \    retry_backoff: fixed\n    retry_delay_ms: 1000\n    system_prompt: null\n\
+    \    timeout_seconds: 30\n  id: node-801fd415\n  position:\n    x: 380.0\n   \
+    \ y: 200.0\nobservability:\n  log_level: info\n  metrics_enabled: true\n  trace_enabled:\
+    \ true\n  trace_include_io: true\n  trace_include_memory: true\n  webhook_on_complete:\
+    \ null\n  webhook_on_failure: null\norchestrator_config:\n  allow_partial_results:\
+    \ null\n  conditions: null\n  engine_type: chain_executor\n  fallback_agent_id:\
+    \ null\n  fanout_timeout_seconds: null\n  llm_model: gpt-4o\n  llm_provider: null\n\
+    \  llm_temperature: 0.3\n  max_iterations: 10\n  max_refinement_loops: null\n\
+    \  merge_agent_id: null\n  merge_strategy: null\n  quality_metric_key: null\n\
+    \  quality_threshold: null\n  reflection_enabled: false\n  reflection_prompt:\
+    \ ''\n  routing_mode: dynamic\n  system_prompt: ''\n  transport_mode: centralized\n\
+    owner: dev-admin\nstatus: draft\nupdated_at: '2026-08-07T01:18:02.173986Z'\nversion:\
+    \ 1\n"
+  transport: http
+kind: ConfigMap
+metadata:
+  name: system-config
+  namespace: yard-live-demo-incident-report-pipeline
+---
+apiVersion: v1
+data:
+  system.json: "{\n  \"id\": \"27f19216-f74c-449c-aa62-aa06468b84da\",\n  \"name\"\
+    : \"Live Demo \\u2014 Incident Report Pipeline\",\n  \"engine_type\": \"chain_executor\"\
+    ,\n  \"transport_mode\": \"centralized\",\n  \"orchestrator_config\": {\n    \"\
+    llm_model\": \"gpt-4o\",\n    \"conditions\": null,\n    \"engine_type\": \"chain_executor\"\
+    ,\n    \"llm_provider\": null,\n    \"routing_mode\": \"dynamic\",\n    \"system_prompt\"\
+    : \"\",\n    \"max_iterations\": 10,\n    \"merge_agent_id\": null,\n    \"merge_strategy\"\
+    : null,\n    \"transport_mode\": \"centralized\",\n    \"llm_temperature\": 0.3,\n\
+    \    \"fallback_agent_id\": null,\n    \"quality_threshold\": null,\n    \"reflection_prompt\"\
+    : \"\",\n    \"quality_metric_key\": null,\n    \"reflection_enabled\": false,\n\
+    \    \"max_refinement_loops\": null,\n    \"allow_partial_results\": null,\n \
+    \   \"fanout_timeout_seconds\": null\n  },\n  \"memory_config\": {\n    \"open\"\
+    : true,\n    \"schema\": null,\n    \"strict\": false,\n    \"strategy\": \"shared_bus\"\
+    ,\n    \"persistence\": \"session\",\n    \"initial_context\": null,\n    \"max_memory_keys\"\
+    : 100,\n    \"memory_ttl_seconds\": null\n  },\n  \"edges\": [\n    {\n      \"\
+    id\": \"edge-seq-0\",\n      \"condition\": null,\n      \"transform\": {\n  \
+    \      \"mappings\": null,\n        \"strategy\": \"passthrough\",\n        \"\
+    llm_model\": null,\n        \"llm_prompt\": null\n      },\n      \"memory_keys\"\
+    : null,\n      \"memory_pass\": \"full\",\n      \"source_node_id\": \"node-a7237503\"\
+    ,\n      \"target_node_id\": \"node-801fd415\",\n      \"schema_compatibility\"\
+    : null\n    }\n  ],\n  \"nodes\": [\n    {\n      \"id\": \"node-a7237503\",\n\
+    \      \"agent_id\": \"83730c84-9872-44e5-8d28-0f71bd1eb9f1\",\n      \"agent_name\"\
+    : \"incident-commander\",\n      \"agent_version\": \"1.0.0\",\n      \"a2a_endpoint\"\
+    : \"http://incident-commander.yard-live-demo-incident-report-pipeline.svc.cluster.local:9000\"\
+    ,\n      \"input_schema\": {\n        \"type\": \"object\",\n        \"title\"\
+    : \"Input\",\n        \"required\": [\n          \"alert_text\",\n          \"\
+    service_name\"\n        ],\n        \"properties\": {\n          \"source\": {\n\
+    \            \"anyOf\": [\n              {\n                \"type\": \"string\"\
+    \n              },\n              {\n                \"type\": \"null\"\n    \
+    \          }\n            ],\n            \"title\": \"Source\",\n           \
+    \ \"default\": null,\n            \"description\": \"e.g. pagerduty, datadog,\
+    \ manual\"\n          },\n          \"alert_text\": {\n            \"type\": \"\
+    string\",\n            \"title\": \"Alert Text\"\n          },\n          \"service_name\"\
+    : {\n            \"type\": \"string\",\n            \"title\": \"Service Name\"\
+    \n          }\n        }\n      },\n      \"output_schema\": {\n        \"type\"\
+    : \"object\",\n        \"title\": \"Output\",\n        \"properties\": {\n   \
+    \       \"summary\": {\n            \"type\": \"string\",\n            \"title\"\
+    : \"Summary\",\n            \"default\": \"\"\n          },\n          \"severity\"\
+    : {\n            \"enum\": [\n              \"sev1\",\n              \"sev2\"\
+    ,\n              \"sev3\",\n              \"sev4\"\n            ],\n         \
+    \   \"type\": \"string\",\n            \"title\": \"Severity\",\n            \"\
+    default\": \"sev3\"\n          },\n          \"page_role\": {\n            \"\
+    enum\": [\n              \"on-call-sre\",\n              \"security-team\",\n\
+    \              \"data-team\",\n              \"eng-manager\",\n              \"\
+    none\"\n            ],\n            \"type\": \"string\",\n            \"title\"\
+    : \"Page Role\",\n            \"default\": \"on-call-sre\"\n          },\n   \
+    \       \"confidence\": {\n            \"type\": \"number\",\n            \"title\"\
+    : \"Confidence\",\n            \"default\": 0.5\n          },\n          \"is_recurring\"\
+    : {\n            \"type\": \"boolean\",\n            \"title\": \"Is Recurring\"\
+    ,\n            \"default\": false\n          },\n          \"incident_type\":\
+    \ {\n            \"enum\": [\n              \"outage\",\n              \"degradation\"\
+    ,\n              \"security\",\n              \"data_integrity\",\n          \
+    \    \"other\"\n            ],\n            \"type\": \"string\",\n          \
+    \  \"title\": \"Incident Type\",\n            \"default\": \"other\"\n       \
+    \   },\n          \"affected_system\": {\n            \"type\": \"string\",\n\
+    \            \"title\": \"Affected System\",\n            \"default\": \"\"\n\
+    \          },\n          \"customer_impact\": {\n            \"type\": \"string\"\
+    ,\n            \"title\": \"Customer Impact\",\n            \"default\": \"\"\n\
+    \          },\n          \"mitigation_steps\": {\n            \"type\": \"array\"\
+    ,\n            \"items\": {\n              \"type\": \"string\"\n            },\n\
+    \            \"title\": \"Mitigation Steps\"\n          },\n          \"status_update_draft\"\
+    : {\n            \"type\": \"string\",\n            \"title\": \"Status Update\
+    \ Draft\",\n            \"default\": \"\"\n          },\n          \"precedents_considered\"\
+    : {\n            \"type\": \"integer\",\n            \"title\": \"Precedents Considered\"\
+    ,\n            \"default\": 0\n          }\n        }\n      },\n      \"config\"\
+    : {\n        \"retries\": 3,\n        \"on_failure\": \"abort\",\n        \"input_mapping\"\
+    : null,\n        \"memory_access\": \"read-write\",\n        \"retry_backoff\"\
+    : \"fixed\",\n        \"system_prompt\": null,\n        \"output_mapping\": null,\n\
+    \        \"rate_limit_rpm\": null,\n        \"retry_delay_ms\": 1000,\n      \
+    \  \"timeout_seconds\": 30,\n        \"cache_ttl_seconds\": null,\n        \"\
+    fallback_agent_id\": null\n      }\n    },\n    {\n      \"id\": \"node-801fd415\"\
+    ,\n      \"agent_id\": \"69d1924f-740d-47a0-9c6c-75db27f1ace6\",\n      \"agent_name\"\
+    : \"report-generator-agent\",\n      \"agent_version\": \"1.0.0\",\n      \"a2a_endpoint\"\
+    : \"http://report-generator-agent.yard-live-demo-incident-report-pipeline.svc.cluster.local:9000\"\
+    ,\n      \"input_schema\": {\n        \"type\": \"object\",\n        \"title\"\
+    : \"Input\",\n        \"required\": [\n          \"data\"\n        ],\n      \
+    \  \"properties\": {\n          \"data\": {\n            \"type\": \"object\"\
+    ,\n            \"title\": \"Data\",\n            \"additionalProperties\": true\n\
+    \          },\n          \"format\": {\n            \"enum\": [\n            \
+    \  \"narrative\",\n              \"bullets\",\n              \"executive_summary\"\
+    \n            ],\n            \"type\": \"string\",\n            \"title\": \"\
+    Format\",\n            \"default\": \"narrative\"\n          },\n          \"\
+    report_type\": {\n            \"enum\": [\n              \"financial\",\n    \
+    \          \"compliance\",\n              \"performance\",\n              \"summary\"\
+    \n            ],\n            \"type\": \"string\",\n            \"title\": \"\
+    Report Type\",\n            \"default\": \"summary\"\n          }\n        }\n\
+    \      },\n      \"output_schema\": {\n        \"type\": \"object\",\n       \
+    \ \"title\": \"Output\",\n        \"properties\": {\n          \"title\": {\n\
+    \            \"type\": \"string\",\n            \"title\": \"Title\",\n      \
+    \      \"default\": \"\"\n          },\n          \"format\": {\n            \"\
+    type\": \"string\",\n            \"title\": \"Format\",\n            \"default\"\
+    : \"narrative\"\n          },\n          \"sections\": {\n            \"type\"\
+    : \"array\",\n            \"items\": {\n              \"type\": \"object\",\n\
+    \              \"additionalProperties\": true\n            },\n            \"\
+    title\": \"Sections\"\n          },\n          \"report_type\": {\n          \
+    \  \"type\": \"string\",\n            \"title\": \"Report Type\",\n          \
+    \  \"default\": \"summary\"\n          },\n          \"key_findings\": {\n   \
+    \         \"type\": \"array\",\n            \"items\": {\n              \"type\"\
+    : \"string\"\n            },\n            \"title\": \"Key Findings\"\n      \
+    \    },\n          \"recommendations\": {\n            \"type\": \"array\",\n\
+    \            \"items\": {\n              \"type\": \"string\"\n            },\n\
+    \            \"title\": \"Recommendations\"\n          },\n          \"executive_summary\"\
+    : {\n            \"type\": \"string\",\n            \"title\": \"Executive Summary\"\
+    ,\n            \"default\": \"\"\n          },\n          \"data_quality_notes\"\
+    : {\n            \"type\": \"string\",\n            \"title\": \"Data Quality\
+    \ Notes\",\n            \"default\": \"\"\n          }\n        }\n      },\n\
+    \      \"config\": {\n        \"retries\": 3,\n        \"on_failure\": \"abort\"\
+    ,\n        \"input_mapping\": null,\n        \"memory_access\": \"read-write\"\
+    ,\n        \"retry_backoff\": \"fixed\",\n        \"system_prompt\": null,\n \
+    \       \"output_mapping\": null,\n        \"rate_limit_rpm\": null,\n       \
+    \ \"retry_delay_ms\": 1000,\n        \"timeout_seconds\": 30,\n        \"cache_ttl_seconds\"\
+    : null,\n        \"fallback_agent_id\": null\n      }\n    }\n  ]\n}"
+kind: ConfigMap
+metadata:
+  name: yard-system-spec
+  namespace: yard-live-demo-incident-report-pipeline

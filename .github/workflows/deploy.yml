@@ -1,0 +1,21 @@
+name: Publish orchestrator image
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    uses: AgentYard/AgentYard/.github/workflows/system-ci.yml@main
+    with:
+      image-name: agentyard-system-live-demo-incident-report-pipeline
+      ecr-registry: ${{ vars.ECR_REGISTRY }}
+      aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+      push: ${{ github.event_name != 'pull_request' }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
